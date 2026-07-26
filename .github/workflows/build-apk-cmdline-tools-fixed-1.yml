@@ -1,0 +1,65 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android Command Line Tools
+        run: |
+          sudo apt update
+          sudo apt install -y wget unzip
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          mkdir -p temp-tools
+          unzip -q commandlinetools-linux-11076708_latest.zip -d temp-tools
+          mkdir -p cmdline-tools/latest
+          mv temp-tools/cmdline-tools/* cmdline-tools/latest/
+
+      - name: Setup Android SDK PATH
+        run: |
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+
+      - name: Install SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install Build Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install buildozer==1.5.0 cython==0.29.36 cffi==1.16.0 pycparser
+
+      - name: Clean Buildozer
+        run: |
+          rm -rf ~/.buildozer
+          rm -rf .buildozer
+
+      - name: Build APK
+        run: |
+          buildozer -v android debug
+
+      - name: Locate APK
+        run: |
+          find . -type f -name "*.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: javanrood-apk
+          path: "**/*.apk"
