@@ -23,9 +23,9 @@ android.add_resources = %(source.dir)s/../assets/android_res
 
 android.permissions = INTERNET
 android.api = 35
-android.minapi = 23
+android.minapi = 24
 android.accept_sdk_license = True
-android.ndk = 25b
+android.ndk = 25c
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = False
 
